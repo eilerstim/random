@@ -22,7 +22,8 @@
         },
         {
           "lines": [
-            "GLOBAL + REDUCE"
+            "GLOBAL + REDUCE / NEWOBJ / BUILD",
+            "any importable callable  (blocked by weights_only)"
           ],
           "danger": true
         }
