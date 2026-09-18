@@ -118,7 +118,7 @@ Other tensor kinds take other rebuild functions, all in `torch/_utils.py`:
 
 ### 1.5 On disk: the zip container
 
-![PyTorch checkpoint structure](figures/pytorch_structure.svg)
+![PyTorch checkpoint structure](figures/pytorch_structure.svg?v=acd7ae7)
 
 `torch.save` (`serialization.py:944`) opens a `torch._C.PyTorchFileWriter` (`serialization.py:810`, binding at `torch/csrc/jit/python/init.cpp:1402`) whose C++ implementation is `caffe2::serialize::PyTorchStreamWriter` (`caffe2/serialize/inline_container.cc:693`). Then `_save` (`serialization.py:1183`) writes the records in this order:
 
