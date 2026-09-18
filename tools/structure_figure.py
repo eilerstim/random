@@ -23,7 +23,7 @@ Spec format (see pytorch/figures/pytorch_structure.json for a full example):
          ]},
         {"width": 320, "boxes": [{"lines": ["Tensor storages", "data/0 ... data/N"]}]}
       ],                                                    # a column without label = one box stretched
-      "footer": [ {"lines": ["version", "3"]}, ... ]        # optional row of small boxes
+      "footer": [ {"lines": ["version"]}, ... ]             # optional row of small boxes, widths follow the text
     }
 
 Only the standard library is used. Text width is estimated (SVG has no
@@ -62,6 +62,7 @@ MAIN_FS = 21
 SUB_FS = 15
 FOOTER_MAIN_FS = 18
 FOOTER_SUB_FS = 14
+FOOTER_TEXT_PAD = 12  # side padding inside a footer box
 LABEL_FS = 21
 TITLE_FS = 32
 CAPTION_FS = 26
@@ -187,9 +188,19 @@ def render(spec):
     if footer:
         y += 44
         n = len(footer)
-        fw = (inner_w - FOOTER_GAP * (n - 1)) / n
+        # Width each box needs for its own text, then scale so the row spans the inner width.
+        natural = [
+            max(est_width(line, FOOTER_MAIN_FS if i == 0 else FOOTER_SUB_FS) for i, line in enumerate(b["lines"]))
+            + 2 * FOOTER_TEXT_PAD
+            for b in footer
+        ]
+        avail = inner_w - FOOTER_GAP * (n - 1)
+        scale = avail / sum(natural)
+        if scale < 1:
+            print(f"warning: footer needs {sum(natural):.0f}px but only {avail:.0f}px available", file=sys.stderr)
+        widths = [w * scale for w in natural]
         fx = cont_x + CONTAINER_PAD
-        for b in footer:
+        for b, fw in zip(footer, widths):
             parts.append(box(fx, y, fw, FOOTER_H, b["lines"], b.get("danger", False), rx=6,
                              main_fs=FOOTER_MAIN_FS, sub_fs=FOOTER_SUB_FS))
             fx += fw + FOOTER_GAP

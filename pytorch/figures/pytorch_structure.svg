@@ -1,40 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1169" viewBox="0 0 1280 1169" font-family="'Open Sans', 'Noto Sans', 'DejaVu Sans', 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1035" viewBox="0 0 1280 1035" font-family="'Open Sans', 'Noto Sans', 'DejaVu Sans', 'Segoe UI', Helvetica, Arial, sans-serif">
 <title>PyTorch Model (.pt / .pth) - Zip Archive</title>
-<rect width="1280" height="1169" fill="#f2f2f2"/>
-<rect x="64" y="40" width="1152" height="1089" fill="#1f2a44"/>
+<rect width="1280" height="1035" fill="#f2f2f2"/>
+<rect x="64" y="40" width="1152" height="955" fill="#1f2a44"/>
 <text x="640.0" y="136" font-size="32" fill="#dfe4ee" text-anchor="middle">PyTorch Model (.pt / .pth) - Zip Archive</text>
-<rect x="144" y="192" width="992" height="865" rx="26" fill="#0e1829" stroke="#3fa34d" stroke-width="2"/>
-<text x="172" y="226" font-size="16" fill="#a9b3c6" font-family="monospace">model/  (archive-name prefix on every entry)</text>
-<text x="466.0" y="265.0" font-size="21" fill="#dfe4ee" text-anchor="middle">data.pkl  (pickle opcode stream, protocol 2)</text>
-<rect x="196.0" y="289.0" width="540" height="592.0" rx="6" fill="none" stroke="#8f99ab" stroke-width="1.4"/>
-<rect x="226.0" y="319.0" width="480.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="466.0" y="363.4" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">collections.OrderedDict</text>
-<text x="466.0" y="387.7" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">state_dict container  (+ _metadata versions)</text>
-<rect x="226.0" y="463.0" width="480.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="466.0" y="507.4" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">torch._utils._rebuild_tensor_v2</text>
-<text x="466.0" y="531.7" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">storage_offset, size, stride, requires_grad</text>
-<rect x="226.0" y="607.0" width="480.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="466.0" y="651.4" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">persistent id  →  data/N</text>
-<text x="466.0" y="675.7" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">('storage', FloatStorage, '0', 'cpu', numel)</text>
-<rect x="226.0" y="751.0" width="480.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="466.0" y="795.4" font-size="21" fill="#ff5a5f" font-weight="600" text-anchor="middle" dominant-baseline="auto">GLOBAL + REDUCE / NEWOBJ / BUILD</text>
-<text x="466.0" y="819.7" font-size="15" fill="#ff5a5f" text-anchor="middle" dominant-baseline="auto">any importable callable  (blocked by weights_only)</text>
-<rect x="784.0" y="289.0" width="300.0" height="592.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="934.0" y="544.9" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">Tensor Storages</text>
-<text x="934.0" y="569.2" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">data/0 … data/N</text>
-<text x="934.0" y="592.2" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">one file per storage</text>
-<text x="934.0" y="615.2" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">raw bytes, uncompressed</text>
-<text x="934.0" y="638.2" font-size="15" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">64-byte aligned</text>
-<rect x="192.0" y="925.0" width="206.0" height="84.0" rx="6" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="295.0" y="961.0" font-size="18" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">version</text>
-<text x="295.0" y="983.9" font-size="14" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">"3"</text>
-<rect x="422.0" y="925.0" width="206.0" height="84.0" rx="6" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="525.0" y="961.0" font-size="18" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">byteorder</text>
-<text x="525.0" y="983.9" font-size="14" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">"little" | "big"</text>
-<rect x="652.0" y="925.0" width="206.0" height="84.0" rx="6" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="755.0" y="961.0" font-size="18" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">.format_version</text>
-<text x="755.0" y="983.9" font-size="14" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">.storage_alignment</text>
-<rect x="882.0" y="925.0" width="206.0" height="84.0" rx="6" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
-<text x="985.0" y="961.0" font-size="18" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">serialization_id</text>
-<text x="985.0" y="983.9" font-size="14" fill="#a9b3c6" text-anchor="middle" dominant-baseline="auto">.data/serialization_id</text>
+<rect x="144" y="192" width="992" height="731" rx="26" fill="#0e1829" stroke="#3fa34d" stroke-width="2"/>
+<text x="456.0" y="259.0" font-size="21" fill="#dfe4ee" text-anchor="middle">data.pkl</text>
+<rect x="196.0" y="283.0" width="520" height="592.0" rx="6" fill="none" stroke="#8f99ab" stroke-width="1.4"/>
+<rect x="226.0" y="313.0" width="460.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
+<text x="456.0" y="368.9" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">collections.OrderedDict</text>
+<rect x="226.0" y="457.0" width="460.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
+<text x="456.0" y="512.9" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">torch._utils._rebuild_tensor_v2</text>
+<rect x="226.0" y="601.0" width="460.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
+<text x="456.0" y="656.9" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">persistent id → data/N</text>
+<rect x="226.0" y="745.0" width="460.0" height="100.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
+<text x="456.0" y="800.9" font-size="21" fill="#ff5a5f" font-weight="600" text-anchor="middle" dominant-baseline="auto">GLOBAL + REDUCE</text>
+<rect x="764.0" y="283.0" width="320.0" height="592.0" rx="8" fill="#0e1829" stroke="#8f99ab" stroke-width="1.4"/>
+<text x="924.0" y="584.9" font-size="21" fill="#dfe4ee" text-anchor="middle" dominant-baseline="auto">Model Weights (data/N)</text>
 </svg>
