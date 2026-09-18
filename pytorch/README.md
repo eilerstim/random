@@ -247,13 +247,13 @@ model.pt
 ② Open the .pt ZIP
         │
         ▼
-③ Read data.pkl
-        │
-        ▼
-④ Pick the unpickler
+③ Pick the unpickler
         │
         ├── weights_only=True  → allowlist unpickler
         └── weights_only=False → pickle.Unpickler
+        │
+        ▼
+④ Read data.pkl
         │
         ▼
 ⑤ unpickler.load()
@@ -301,6 +301,8 @@ Complete state_dict
 Final model
 ```
 
+The order above is the order the calls happen at run time: [`scripts/trace_load.py`](scripts/trace_load.py) wraps these functions and prints them as a real `torch.load` runs ([captured output](scripts/trace_load_output_torch-2.14.0.txt)).
+
 ### 2.2 Step by step, with the code
 
 **① `torch.load()`** (`serialization.py:1315`). If `weights_only` is not passed, `_default_to_weights_only(pickle_module)` (`serialization.py:89`) returns `True` unless a custom `pickle_module` was given (then it silently becomes `False`). Two environment variables can override: `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1` forces `True` everywhere; `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1` forces `False` only where the caller did not pass the argument (`serialization.py:1483-1508`). Passing `pickle_module` together with `weights_only=True` is an error. `encoding="utf-8"` is added to the unpickler arguments by default. If `f` is a path ending in `.safetensors`, the function returns early via safetensors (`serialization.py:1536`).
@@ -319,15 +321,16 @@ Record access goes through `getRecord(name)` (`inline_container.cc:370`): locate
 
 Two things happen right after the archive is open. `_is_torchscript_zip` (`serialization.py:2251`) checks for `constants.pkl`; if present, `torch.load` rewinds and hands over to `torch.jit.load` (or raises under `weights_only=True`, `serialization.py:1583`). And if `mmap=True` (or `config.load.mmap`), `torch.load` requires a real path and maps the **whole file** once with `torch.UntypedStorage.from_file(path, shared, size)` (`serialization.py:1598` → `THPStorage_fromFile`, `torch/csrc/StorageMethods.cpp:410` → `at::MapAllocator`, `mmap(nullptr, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0)`, `aten/src/ATen/MapAllocator.cpp:351`). `MAP_SHARED` can be selected with `torch.serialization.set_default_mmap_options`.
 
-**③ Read data.pkl** (`_load`, `serialization.py:1994`). `_load` first reads the bookkeeping records and prepares the storage loader:
+**③ Pick the unpickler** (`serialization.py:1605-1622`, `:2219`). The choice is made in `torch.load` before `_load` is called: with `weights_only=True` it passes `torch._weights_only_unpickler` as the `pickle_module`, otherwise the caller's `pickle_module` (the standard library `pickle` by default, or `dill`, etc.). Inside `_load`, both paths construct a small `UnpicklerWrapper` subclass of `pickle_module.Unpickler` (`serialization.py:2219`). With the standard unpickler the wrapper's `find_class` returns a `StorageType(name)` (`serialization.py:1982`) for any global whose name contains `Storage`, so that `torch.FloatStorage` resolves to a lightweight object with a `.dtype` instead of the deprecated storage class; it also maps the old module name `torch.tensor` to `torch._tensor`. The `weights_only` interpreter (described in 2.3) never calls `find_class`, because its allowlist already maps the storage class names to `StorageType` objects.
 
+**④ Read data.pkl** (`_load`, `serialization.py:1994`). `_load` first reads the bookkeeping records and prepares the storage loader:
+
+- `restore_location = _get_restore_location(map_location)` (`serialization.py:1952`) turns `map_location` into a function `(storage, location_tag) -> storage`: `None` uses the registry defaults; a `dict` remaps tags; a string or `torch.device` sends everything to that device; a callable is tried first and falls back to the default when it returns `None`.
 - `.format_version` decides whether storage offsets may be *computed* instead of read (`serialization.py:2013`).
 - The `byteorder` record is read (`serialization.py:2019`). If absent, the fallback comes from `torch.utils.serialization.config.load.endianness` (default: assume little endian).
-- `restore_location = _get_restore_location(map_location)` (`serialization.py:1952`) turns `map_location` into a function `(storage, location_tag) -> storage`: `None` uses the registry defaults; a `dict` remaps tags; a string or `torch.device` sends everything to that device; a callable is tried first and falls back to the default when it returns `None`.
+- `.storage_alignment` is read for the offset arithmetic (`serialization.py:2036`).
 
-Then `data.pkl` is read fully into a `BytesIO` (`serialization.py:2233`). The pickle is never streamed.
-
-**④ Pick the unpickler** (`serialization.py:2219`). Both paths construct a small `UnpicklerWrapper` subclass of `pickle_module.Unpickler`. With `weights_only=False` that is the standard library unpickler (or `dill`'s, etc.), and the wrapper's `find_class` returns a `StorageType(name)` (`serialization.py:1982`) for any global whose name contains `Storage`, so that `torch.FloatStorage` resolves to a lightweight object with a `.dtype` instead of the deprecated storage class; it also maps the old module name `torch.tensor` to `torch._tensor`. With `weights_only=True`, `pickle_module` is `torch._weights_only_unpickler` (described in 2.3); its interpreter never calls `find_class`, because its allowlist already maps the storage class names to `StorageType` objects. `torch.load`'s `persistent_load` is attached to the unpickler either way (`serialization.py:2236`).
+Then `data.pkl` is read fully into a `BytesIO` (`serialization.py:2233`); the pickle is never streamed. The unpickler chosen in ③ is instantiated on that buffer and `torch.load`'s `persistent_load` is attached to it (`serialization.py:2235-2236`).
 
 **⑤ `unpickler.load()`** (`serialization.py:2241`). The unpickler executes the opcodes of `data.pkl` in order. `GLOBAL module name` pushes a callable or class: the standard unpickler imports the module (executing its top-level code) and fetches the attribute, while the `weights_only` unpickler looks the dotted name up in a dictionary and never imports (`_weights_only_unpickler.py:331`). For a state dict the look-ups are only `collections.OrderedDict`, `torch._utils._rebuild_tensor_v2` and one storage class per dtype. Two opcodes do the real work and get their own steps below: `BINPERSID` (⑥) and `REDUCE` (⑦). `SETITEMS` fills the `OrderedDict`; `BUILD` on the `OrderedDict` installs `_metadata` (the `weights_only` unpickler special-cases this as `inst.__dict__.update(state)`, `_weights_only_unpickler.py:428`). For whole modules, `NEWOBJ` creates the instance via `cls.__new__` and `BUILD` calls `Module.__setstate__` with the pickled `__dict__`.
 
@@ -401,6 +404,7 @@ These follow directly from the mechanics above; they are the reason the `GLOBAL/
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cpu   # any 2.x works; 2.14.0 was used here
 python pytorch/scripts/inspect_checkpoint.py            # writes checkpoints to a temp dir and dumps everything
+python pytorch/scripts/trace_load.py                    # prints the call order behind the flow chart in 2.1
 python tools/structure_figure.py pytorch/figures/pytorch_structure.json -o pytorch/figures/pytorch_structure.svg
 node tools/render_png.cjs pytorch/figures/pytorch_structure.svg pytorch/figures/pytorch_structure.png   # optional PNG (needs playwright)
 ```

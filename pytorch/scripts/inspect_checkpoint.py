@@ -174,6 +174,20 @@ def main(out_dir):
     with zipfile.ZipFile(io.BytesIO(buf.getvalue())) as zf:
         print("  members:", zf.namelist()[:3], "...")
 
+    hr("Tensors that share a storage share one data/N record")
+    base = torch.arange(10.0)
+    view = base[2:5]
+    buf = io.BytesIO()
+    torch.save({"base": base, "view": view}, buf)
+    with zipfile.ZipFile(io.BytesIO(buf.getvalue())) as zf:
+        members = [n for n in zf.namelist() if "/data/" in n]
+    print(f"  two tensors saved, storage records in the zip: {members}")
+    buf.seek(0)
+    loaded = torch.load(buf)
+    same = loaded["view"].untyped_storage().data_ptr() == loaded["base"].untyped_storage().data_ptr()
+    print(f"  after load they still share one storage: {same}; view.storage_offset() = {loaded['view'].storage_offset()}, "
+          f"view.shape = {tuple(loaded['view'].shape)}")
+
     hr(f"Legacy (pre-1.6) format: {legacy_path.name}")
     raw = legacy_path.read_bytes()
     print(f"  first 4 bytes: {raw[:4]!r} (not a ZIP -> _legacy_load)")

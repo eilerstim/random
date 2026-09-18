@@ -14,6 +14,7 @@ tools/render_png.cjs           SVG -> PNG with headless Chromium (playwright); o
 <framework>/README.md          the deep dive (structure + load path + security notes + source map)
 <framework>/figures/           <framework>_structure.json (spec), .svg (source of truth), .png (rendered)
 <framework>/scripts/           reproducible experiments; stdlib + the framework only
+                               inspect_*.py dumps the container; trace_load.py prints the loader's call order
 <framework>/scripts/*_output_<framework>-<version>.txt   captured output, kept as evidence for the version studied
 ```
 
@@ -27,6 +28,7 @@ Done so far: `pytorch/` (torch 2.14.0, tag v2.14.0).
 2. **Read the loader top-down.** Start at the public load function, follow every call into the container parser (zip/tar/protobuf/HDF5/...), the object reconstruction (pickle, JSON config, protobuf graph), and the device/dtype handling. Read the C/C++ layer too; that is where the container format is actually defined.
 3. **Read the saver as well.** The writer tells you exactly which records exist and in which order; the reader often tolerates more than the writer produces.
 4. **Confirm empirically.** Write `scripts/inspect_<something>.py` that saves a tiny model and dumps the container table, the serialized structure (e.g. `pickletools.dis`), the bookkeeping records, and the behaviour of the safety switches. Commit the script and its output for the pinned version. Never trust a claim about bytes on disk that the script did not show.
+   Also write `scripts/trace_load.py`: wrap the functions the flow chart names and print them in the order a real load runs them. Check the flow chart against that trace, not against your reading of the code; the PyTorch chart had two steps in the wrong order until the trace showed it (the unpickler is chosen before `data.pkl` is read).
 5. **Date the features.** For each record/flag, find the release it appeared in by fetching old tags into the sparse clone (`git fetch --depth 1 origin tag vA.B.0`) and grepping `git show vA.B.0:path`. Put the result in a "Since" column.
 6. **Cite `path:line` at the pinned tag.** Re-grep every line number before committing; they drift while writing.
 7. **Cross-check with the official docs**, but describe behaviour from the code. Note where docs and code disagree.

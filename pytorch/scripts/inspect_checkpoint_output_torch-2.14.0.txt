@@ -497,7 +497,7 @@ weights_only=True (default) behaviour
       	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`.
       	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
       	WeightsUnpickler error: Unsupported global: GLOBAL __main__.TinyNet was not an allowed global by default. Please use `t
-  get_unsafe_globals_in_checkpoint(full) = ['torch.nn.modules.batchnorm.BatchNorm2d', 'torch.nn.modules.linear.Linear', 'torch.nn.modules.conv.Conv2d', '__main__.TinyNet']
+  get_unsafe_globals_in_checkpoint(full) = ['torch.nn.modules.linear.Linear', 'torch.nn.modules.batchnorm.BatchNorm2d', '__main__.TinyNet', 'torch.nn.modules.conv.Conv2d']
   ...loads with safe_globals([TinyNet, Conv2d, BatchNorm2d, Linear]) => TinyNet
 
 ==============================================================================
@@ -512,15 +512,21 @@ Buffer save uses archive name 'archive/'
   members: ['archive/data.pkl', 'archive/.format_version', 'archive/.storage_alignment'] ...
 
 ==============================================================================
+Tensors that share a storage share one data/N record
+==============================================================================
+  two tensors saved, storage records in the zip: ['archive/data/0']
+  after load they still share one storage: True; view.storage_offset() = 2, view.shape = (3,)
+
+==============================================================================
 Legacy (pre-1.6) format: tinynet_legacy.pt
 ==============================================================================
   first 4 bytes: b'\x80\x02\x8a\n' (not a ZIP -> _legacy_load)
   pickle #1 magic  = 0x1950a86a20f9469cfc6c (== torch.serialization.MAGIC_NUMBER: True)
   pickle #2 proto  = 1001
   pickle #3 sysinfo= {'protocol_version': 1001, 'little_endian': True, 'type_sizes': {'short': 2, 'int': 4, 'long': 4}}
-  pickle #4 main object: bytes [137, 1076)
-  pickle #5 storage keys (str(cdata) ids) = ['1069895440', '1069895584', '1069896256'] ...
-  then raw storages: int64 numel=2 followed by 2 elements, repeated per key
+  pickle #4 main object: bytes [137, 1072)
+  pickle #5 storage keys (str(cdata) ids) = ['231300288', '231300896', '231388304'] ...
+  then raw storages: int64 numel=18 followed by 18 elements, repeated per key
 
 ==============================================================================
 mmap=True maps the whole file once and slices it per storage
