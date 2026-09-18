@@ -233,105 +233,81 @@ There is an even older tar-based layout (`storages`, `tensors`, `pickle` members
 ### 2.1 The flow
 
 ```
-model.pt  (ZIP64 archive, all entries STORED, data 64-byte aligned)
+model.pt
 │
-├── model/data.pkl                 pickle (protocol 2) of the saved object; storages replaced by persistent ids
-├── model/byteorder                "little" | "big"
-├── model/data/0 … model/data/N    one raw storage per entry (the tensor bytes)
-├── model/version                  "3"
-└── model/.data/serialization_id   40-digit id (hash of record names + CRC32s)
+├── data.pkl
+├── data/0 … data/N
+├── byteorder
+└── version
         │
         ▼
-① torch.load(f, map_location=None, weights_only=None, mmap=None)
-        │
-        ├── weights_only=None → True  (default since 2.6; TORCH_FORCE_*_WEIGHTS_ONLY_LOAD env vars can override)
-        └── f ends with ".safetensors" → safetensors.torch.load_file()  (2.13+)
+① torch.load()
         │
         ▼
-② _open_file_like(f, "rb")           open(path) / verify that a buffer is seekable
+② Open the .pt ZIP
         │
         ▼
-③ _is_zipfile(f)                      first 4 bytes == b"PK\x03\x04"?
-        │                               no → _legacy_load (pre-1.6 pickle sequence / tar)
-        ▼
-④ torch._C.PyTorchFileReader(f)       C++ PyTorchStreamReader on top of miniz
-        │
-        ├── reject the "PYTORCH1" preview-release magic
-        ├── mz_zip_reader_init          parse the central directory
-        ├── archive_name = entry[0] up to "/"      → every lookup becomes "model/<name>"
-        ├── read .data/serialization_id
-        └── read version, require 1 ≤ version ≤ 10
+③ Read data.pkl
         │
         ▼
-⑤ _is_torchscript_zip()               "constants.pkl" present? → torch.jit.load() instead
+④ Pick the unpickler
+        │
+        ├── weights_only=True  → allowlist unpickler
+        └── weights_only=False → pickle.Unpickler
         │
         ▼
-⑥ _load(zip_file, map_location, pickle_module)
+⑤ unpickler.load()
         │
-        ├── read byteorder              → byteswap storages later if it differs from sys.byteorder
-        ├── restore_location = _get_restore_location(map_location)
-        ├── mmap=True → UntypedStorage.from_file(whole file)   (one mmap(MAP_PRIVATE), sliced per storage)
-        └── data_file = BytesIO(zip_file.get_record("data.pkl"))
+        ├── Look up collections.OrderedDict
         │
-        ▼
-⑦ Choose the unpickler
-        ├── weights_only=True  → torch._weights_only_unpickler.Unpickler   allowlist, never imports
-        └── weights_only=False → pickle.Unpickler subclass                  find_class imports anything
-   unpickler.persistent_load = persistent_load
+        ├── Look up torch._utils._rebuild_tensor_v2
+        │
+        └── Look up torch.FloatStorage
         │
         ▼
-⑧ unpickler.load()                    execute the opcode stream of data.pkl
+⑥ persistent_load()
         │
-        ├── GLOBAL collections.OrderedDict → REDUCE           the state_dict container
-        ├── GLOBAL torch._utils._rebuild_tensor_v2             (allowlist lookup / import)
-        ├── GLOBAL torch.FloatStorage        → StorageType(dtype=float32)
-        ├── BINPERSID ("storage", FloatStorage, "0", "cpu", numel)
-        │       → persistent_load()
-        │            ├── load_tensor(): zip_file.get_storage_from_record("data/0", nbytes)   (or mmap slice)
-        │            ├── restore_location(storage, "cpu")         ← map_location applied here
-        │            └── TypedStorage(wrap_storage=…, dtype=float32); cached in loaded_storages["0"]
-        ├── REDUCE  _rebuild_tensor_v2(storage, offset, size, stride, requires_grad, hooks)
-        │            → torch.empty(0, dtype).set_(storage, offset, size, stride)
-        ├── SETITEMS   state_dict["conv.weight"] = tensor, …
-        ├── BUILD      state_dict._metadata = {"": {"version": 1}, "bn": {"version": 2}, …}
-        └── STOP
-        │
-        │   only when a whole nn.Module was saved (needs weights_only=False or safe_globals):
-        │   GLOBAL __main__.MyNet → NEWOBJ → … → BUILD → Module.__setstate__(__dict__)
-        │   GLOBAL torch._utils._rebuild_parameter → REDUCE → nn.Parameter(tensor)
+        ├── read data/N
+        └── apply map_location
         │
         ▼
-⑨ _validate_loaded_sparse_tensors(); return result
+Create each Storage
         │
         ▼
-state_dict: OrderedDict[str, Tensor]   (+ ._metadata)
+⑦ _rebuild_tensor_v2()
         │
         ▼
-⑩ model = MyNet()                      your code builds the architecture
-   model.load_state_dict(state_dict, strict=True, assign=False)
-        │
-        ├── recurse over module._modules with prefixes "conv.", "bn.", …
-        ├── per module: _load_from_state_dict()
-        │      ├── _load_state_dict_pre_hooks   (BC fix-ups keyed on _metadata["bn"]["version"])
-        │      ├── shape check                   → error_msgs
-        │      └── with torch.no_grad(): param.copy_(loaded)   (assign=True → setattr instead)
-        ├── _load_state_dict_post_hooks
-        └── strict=True: missing_keys / unexpected_keys → RuntimeError
+Create each Tensor
+e.g.:
+conv.weight
+conv.bias
+bn.running_mean
+...
         │
         ▼
-Final model  (architecture from code, weights from the file)
+Complete state_dict
+        │
+        ▼
+⑧ model = MyNet()
+        │
+        ▼
+⑨ model.load_state_dict()
+        │
+        ├── match keys
+        ├── check shapes
+        └── param.copy_()
+        │
+        ▼
+Final model
 ```
 
 ### 2.2 Step by step, with the code
 
-**① Entry and the `weights_only` decision** (`torch.load`, `serialization.py:1315`).
-If `weights_only` is not passed, `_default_to_weights_only(pickle_module)` (`serialization.py:89`) returns `True` unless a custom `pickle_module` was given (then it silently becomes `False`). Two environment variables can override: `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1` forces `True` everywhere; `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1` forces `False` only where the caller did not pass the argument (`serialization.py:1483-1508`). Passing `pickle_module` together with `weights_only=True` is an error. `encoding="utf-8"` is added to the unpickler arguments by default. If `f` is a path ending in `.safetensors`, the function returns early via safetensors (`serialization.py:1536`).
+**① `torch.load()`** (`serialization.py:1315`). If `weights_only` is not passed, `_default_to_weights_only(pickle_module)` (`serialization.py:89`) returns `True` unless a custom `pickle_module` was given (then it silently becomes `False`). Two environment variables can override: `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1` forces `True` everywhere; `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1` forces `False` only where the caller did not pass the argument (`serialization.py:1483-1508`). Passing `pickle_module` together with `weights_only=True` is an error. `encoding="utf-8"` is added to the unpickler arguments by default. If `f` is a path ending in `.safetensors`, the function returns early via safetensors (`serialization.py:1536`).
 
-**② Opening** (`_open_file_like`, `serialization.py:793`). A path is opened with `open(name, "rb")`; a file-like object is checked for `seek`/`tell` (`_check_seekable`) because the zip reader needs random access.
+The file is then opened with `_open_file_like` (`serialization.py:793`): a path with `open(name, "rb")`, a file-like object after checking that it supports `seek`/`tell` (`_check_seekable`), because the zip reader needs random access. `_is_zipfile` (`serialization.py:428`) compares the first four bytes with `PK\x03\x04`. Anything else goes to `_legacy_load` (`serialization.py:1667`), which first tries the tar layout and then the magic-number pickle sequence.
 
-**③ Format sniffing** (`_is_zipfile`, `serialization.py:428`). Only the first four bytes are compared with `PK\x03\x04`. Anything else goes to `_legacy_load` (`serialization.py:1667`), which first tries the tar layout and then the magic-number pickle sequence.
-
-**④ Opening the container** (`_open_zipfile_reader`, `serialization.py:805` → `torch._C.PyTorchFileReader`, `init.cpp:1593`). For a path the C++ side uses a `FileAdapter` (`fopen`/`fseeko`/`fread`, `caffe2/serialize/file_adapter.cc`); for a Python buffer, a `BufferAdapter` that calls the object's `seek`/`readinto`/`read` (`init.cpp:1530`). `PyTorchStreamReader::init` (`inline_container.cc:142`):
+**② Open the .pt ZIP** (`_open_zipfile_reader`, `serialization.py:805` → `torch._C.PyTorchFileReader`, `init.cpp:1593`). For a path the C++ side uses a `FileAdapter` (`fopen`/`fseeko`/`fread`, `caffe2/serialize/file_adapter.cc`); for a Python buffer, a `BufferAdapter` that calls the object's `seek`/`readinto`/`read` (`init.cpp:1530`). `PyTorchStreamReader::init` (`inline_container.cc:142`):
 
 1. rejects files starting with the 2018 preview magic `PYTORCH1` (`inline_container.cc:157`);
 2. `mz_zip_reader_init` parses the central directory (`inline_container.cc:164`);
@@ -341,35 +317,38 @@ If `weights_only` is not passed, `_default_to_weights_only(pickle_module)` (`ser
 
 Record access goes through `getRecord(name)` (`inline_container.cc:370`): locate the entry, allocate `m_uncomp_size` bytes with the CPU allocator, and `mz_zip_reader_extract_to_mem` into it. The reader can therefore also read compressed entries produced by other tools, even though PyTorch never writes them.
 
-**⑤ TorchScript detection** (`_is_torchscript_zip`, `serialization.py:2251`): if the archive has `constants.pkl`, `torch.load` rewinds and hands over to `torch.jit.load` (or raises under `weights_only=True`).
+Two things happen right after the archive is open. `_is_torchscript_zip` (`serialization.py:2251`) checks for `constants.pkl`; if present, `torch.load` rewinds and hands over to `torch.jit.load` (or raises under `weights_only=True`, `serialization.py:1583`). And if `mmap=True` (or `config.load.mmap`), `torch.load` requires a real path and maps the **whole file** once with `torch.UntypedStorage.from_file(path, shared, size)` (`serialization.py:1598` → `THPStorage_fromFile`, `torch/csrc/StorageMethods.cpp:410` → `at::MapAllocator`, `mmap(nullptr, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0)`, `aten/src/ATen/MapAllocator.cpp:351`). `MAP_SHARED` can be selected with `torch.serialization.set_default_mmap_options`.
 
-**⑥ Preparing the load** (`_load`, `serialization.py:1994`).
+**③ Read data.pkl** (`_load`, `serialization.py:1994`). `_load` first reads the bookkeeping records and prepares the storage loader:
 
-- `restore_location = _get_restore_location(map_location)` (`serialization.py:1952`) turns `map_location` into a function `(storage, location_tag) -> storage`: `None` uses the registry defaults; a `dict` remaps tags; a string or `torch.device` sends everything to that device; a callable is tried first and falls back to the default when it returns `None`.
 - `.format_version` decides whether storage offsets may be *computed* instead of read (`serialization.py:2013`).
 - The `byteorder` record is read (`serialization.py:2019`). If absent, the fallback comes from `torch.utils.serialization.config.load.endianness` (default: assume little endian).
-- If `mmap=True` (or `config.load.mmap`), `torch.load` requires a real path and maps the **whole file** once with `torch.UntypedStorage.from_file(path, shared, size)` (`serialization.py:1598` → `THPStorage_fromFile`, `torch/csrc/StorageMethods.cpp:410` → `at::MapAllocator`, `mmap(nullptr, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0)`, `aten/src/ATen/MapAllocator.cpp:351`). `MAP_SHARED` can be selected with `torch.serialization.set_default_mmap_options`.
-- `data.pkl` is read fully into a `BytesIO` (`serialization.py:2233`). The pickle is never streamed.
+- `restore_location = _get_restore_location(map_location)` (`serialization.py:1952`) turns `map_location` into a function `(storage, location_tag) -> storage`: `None` uses the registry defaults; a `dict` remaps tags; a string or `torch.device` sends everything to that device; a callable is tried first and falls back to the default when it returns `None`.
 
-**⑦ Choosing the unpickler** (`serialization.py:2219`). Both paths construct a small `UnpicklerWrapper` subclass of `pickle_module.Unpickler`. With `weights_only=False` that is the standard library unpickler (or `dill`'s, etc.), and the wrapper's `find_class` returns a `StorageType(name)` (`serialization.py:1982`) for any global whose name contains `Storage`, so that `torch.FloatStorage` resolves to a lightweight object with a `.dtype` instead of the deprecated storage class; it also maps the old module name `torch.tensor` to `torch._tensor`. With `weights_only=True`, `pickle_module` is `torch._weights_only_unpickler` (described in 2.3); its interpreter never calls `find_class`, because its allowlist already maps the storage class names to `StorageType` objects.
+Then `data.pkl` is read fully into a `BytesIO` (`serialization.py:2233`). The pickle is never streamed.
 
-**⑧ Running the pickle.** The unpickler executes opcodes in order. The interesting ones:
+**④ Pick the unpickler** (`serialization.py:2219`). Both paths construct a small `UnpicklerWrapper` subclass of `pickle_module.Unpickler`. With `weights_only=False` that is the standard library unpickler (or `dill`'s, etc.), and the wrapper's `find_class` returns a `StorageType(name)` (`serialization.py:1982`) for any global whose name contains `Storage`, so that `torch.FloatStorage` resolves to a lightweight object with a `.dtype` instead of the deprecated storage class; it also maps the old module name `torch.tensor` to `torch._tensor`. With `weights_only=True`, `pickle_module` is `torch._weights_only_unpickler` (described in 2.3); its interpreter never calls `find_class`, because its allowlist already maps the storage class names to `StorageType` objects. `torch.load`'s `persistent_load` is attached to the unpickler either way (`serialization.py:2236`).
 
-- `GLOBAL module name` pushes a callable or class. Standard pickle imports the module (executing its top-level code) and fetches the attribute. The `weights_only` unpickler looks the dotted name up in a dictionary and never imports (`_weights_only_unpickler.py:331`).
-- `BINPERSID` pops the tuple and calls `persistent_load` (`serialization.py:2183`). It asserts the tuple starts with `"storage"`, extracts `(storage_type, key, location, numel)`, computes `nbytes = numel * element_size(dtype)`, and calls `load_tensor` (`serialization.py:2113`) unless the key was already loaded (`loaded_storages` cache, so shared storages are read once). `load_tensor`:
-  - normal path: `zip_file.get_storage_from_record("data/<key>", nbytes, torch.UntypedStorage)` (`serialization.py:2148`; binding at `init.cpp:1611`) reads the record into a fresh CPU storage and checks that the record size equals `nbytes`;
-  - `mmap` path: `overall_storage[offset : offset + nbytes]`, where `offset` is either read from the entry's local header (`getRecordOffset`, `inline_container.cc:622`) or computed arithmetically from the previous storage's offset when `config.load.calculate_storage_offsets` is on (`_get_offset`, `serialization.py:2066`, which mirrors miniz's header layout);
-  - meta/fake-tensor paths allocate an empty `meta` storage and only record the checkpoint offset;
-  - byteswaps in place if the file's byte order differs from the host (`storage.byteswap(dtype)`, `serialization.py:2155` → `THPStorage_byteswap`, `StorageMethods.cpp:618`);
-  - applies `restore_location(storage, location)` (`serialization.py:2167`), which is where CUDA tensors are moved to the GPU or remapped by `map_location`, and where a missing device raises the well-known "Attempting to deserialize object on a CUDA device but torch.cuda.is_available() is False" error (`_validate_device`, `serialization.py:601`);
-  - wraps the result in a `TypedStorage` so that `_rebuild_tensor_v2` can read `.dtype` from it.
-- `REDUCE` calls the function on the stack: `_rebuild_tensor_v2(storage, storage_offset, size, stride, requires_grad, backward_hooks, metadata=None)` (`_utils.py:230`) creates `torch.empty((0,), dtype, device=storage.device)` and calls `set_(storage, offset, size, stride)`, then sets `requires_grad`. No bytes are copied here; the tensor is a view on the storage created in `persistent_load`.
-- `SETITEMS` fills the `OrderedDict`; `BUILD` on the `OrderedDict` installs `_metadata` (the `weights_only` unpickler special-cases this as `inst.__dict__.update(state)`, `_weights_only_unpickler.py:428`).
-- For whole modules: `NEWOBJ` creates the instance via `cls.__new__`, and `BUILD` calls `Module.__setstate__` with the pickled `__dict__`.
+**⑤ `unpickler.load()`** (`serialization.py:2241`). The unpickler executes the opcodes of `data.pkl` in order. `GLOBAL module name` pushes a callable or class: the standard unpickler imports the module (executing its top-level code) and fetches the attribute, while the `weights_only` unpickler looks the dotted name up in a dictionary and never imports (`_weights_only_unpickler.py:331`). For a state dict the look-ups are only `collections.OrderedDict`, `torch._utils._rebuild_tensor_v2` and one storage class per dtype. Two opcodes do the real work and get their own steps below: `BINPERSID` (⑥) and `REDUCE` (⑦). `SETITEMS` fills the `OrderedDict`; `BUILD` on the `OrderedDict` installs `_metadata` (the `weights_only` unpickler special-cases this as `inst.__dict__.update(state)`, `_weights_only_unpickler.py:428`). For whole modules, `NEWOBJ` creates the instance via `cls.__new__` and `BUILD` calls `Module.__setstate__` with the pickled `__dict__`.
 
-**⑨ Wrap-up** (`serialization.py:2241-2249`). `torch._utils._validate_loaded_sparse_tensors()` checks the invariants of any sparse tensors that were built with `check_invariants=False` (always under `weights_only=True`), the serialization id is logged, and the object is returned. Note that `torch.load` returns whatever was pickled: an `OrderedDict`, a module, a dict with `epoch`/`optimizer` keys, or any other Python object.
+When `STOP` is reached, `_load` runs `torch._utils._validate_loaded_sparse_tensors()` (`serialization.py:2244`), which checks the invariants of any sparse tensors that were built with `check_invariants=False` (always under `weights_only=True`), logs the serialization id, and returns the object. `torch.load` returns whatever was pickled: an `OrderedDict`, a module, a dict with `epoch`/`optimizer` keys, or any other Python object.
 
-**⑩ From `state_dict` to model** (`Module.load_state_dict`, `module.py:2535`). `torch.load` does not know about your model; `load_state_dict` does the matching:
+**⑥ `persistent_load()`** (`serialization.py:2183`). `BINPERSID` pops the tuple and calls it. It asserts the tuple starts with `"storage"`, extracts `(storage_type, key, location, numel)`, computes `nbytes = numel * element_size(dtype)`, and calls `load_tensor` (`serialization.py:2113`) unless the key was already loaded (`loaded_storages` cache, so shared storages are read once). `load_tensor`:
+
+- normal path: `zip_file.get_storage_from_record("data/<key>", nbytes, torch.UntypedStorage)` (`serialization.py:2148`; binding at `init.cpp:1611`) reads the record into a fresh CPU storage and checks that the record size equals `nbytes`;
+- `mmap` path: `overall_storage[offset : offset + nbytes]`, where `offset` is either read from the entry's local header (`getRecordOffset`, `inline_container.cc:622`) or computed arithmetically from the previous storage's offset when `config.load.calculate_storage_offsets` is on (`_get_offset`, `serialization.py:2066`, which mirrors miniz's header layout);
+- meta/fake-tensor paths allocate an empty `meta` storage and only record the checkpoint offset;
+- byteswaps in place if the file's byte order differs from the host (`storage.byteswap(dtype)`, `serialization.py:2155` → `THPStorage_byteswap`, `StorageMethods.cpp:618`);
+- applies `restore_location(storage, location)` (`serialization.py:2167`), which is where CUDA tensors are moved to the GPU or remapped by `map_location`, and where a missing device raises the well-known "Attempting to deserialize object on a CUDA device but torch.cuda.is_available() is False" error (`_validate_device`, `serialization.py:601`);
+- wraps the result in a `TypedStorage` so that `_rebuild_tensor_v2` can read `.dtype` from it.
+
+The result of this step is one storage object per `data/N` entry, already on its final device.
+
+**⑦ `_rebuild_tensor_v2()`** (`_utils.py:230`). `REDUCE` calls the function on the stack with `(storage, storage_offset, size, stride, requires_grad, backward_hooks, metadata=None)`. It creates `torch.empty((0,), dtype, device=storage.device)`, calls `set_(storage, offset, size, stride)`, and sets `requires_grad`. No bytes are copied here; the tensor is a view on the storage created in ⑥, which is also how several tensors end up sharing one storage. Once `SETITEMS` has placed every tensor under its key, the `OrderedDict` is the complete state dict.
+
+**⑧ `model = MyNet()`**. Nothing in the file describes the architecture, so the caller constructs the model from code. Its parameters hold freshly initialised values at this point; `torch.load` has not touched the model.
+
+**⑨ `model.load_state_dict()`** (`Module.load_state_dict`, `module.py:2535`). `torch.load` does not know about your model; `load_state_dict` does the matching:
 
 1. The input dict is shallow-copied into an `OrderedDict` and `_metadata` is carried over.
 2. A recursive `load(module, local_state_dict, prefix)` (`module.py:2589`) visits every module; each child gets the subset of keys starting with its prefix.

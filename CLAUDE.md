@@ -49,10 +49,12 @@ Writing rules: short sentences, one fact per sentence, no hedging where the code
 
 Two figures per framework.
 
-**Figure 1: load-path flow chart (text, inside the README).** Style, copied from the PyTorch one:
-- The file tree at the top (`├──`, `└──`), then `│ / ▼` connectors, then numbered steps with circled digits `① ② ③ ...`, ending in `Final model`.
-- Sub-steps hang off a step with `├──` / `└──` at an 8-space indent; a one-line explanation may follow a step name after two spaces.
-- Show the concrete function names and the concrete opcodes/records, not abstractions. Add detail only where it helps understanding (e.g. show where `map_location` is applied); keep one step per box otherwise.
+**Figure 1: load-path flow chart (text, inside the README).** Match the density of the owner's Keras example, not more; the PyTorch one was first written far too detailed and had to be cut down.
+- The file tree at the top with bare entry names (`├──`, `└──`), then `│ / ▼` connectors, then numbered steps with circled digits `① ② ③ ...`, ending in `Final model`.
+- One short label per step: a function call (`torch.load()`) or a three-to-five-word action (`Open the .pt ZIP`). No trailing explanations, argument lists or line references in the figure; those belong in the step-by-step prose, whose step numbers must match the figure.
+- Sub-bullets only where a step fans out (look-ups, branches): two or three short phrases at an 8-space indent with `├──` / `└──`.
+- Unnumbered result nodes between steps (`Create each Tensor`, `Complete state_dict`), optionally with an `e.g.:` list of three or four items.
+- About nine steps. The only extra the PyTorch figure carries relative to the Keras example is the `weights_only` branch, because the safety switch is the point of these deep dives.
 
 **Figure 2: model-structure figure (SVG via `tools/structure_figure.py`).** Reference style is the Keras v3 figure the repo owner provided: dark navy panel, title inside the panel, one rounded container with a green border, gray-bordered boxes inside, red text for the component that can execute code (Keras: the Lambda layer; PyTorch: the pickle `GLOBAL + REDUCE / NEWOBJ / BUILD` box).
 - Spec lives in `<framework>/figures/<framework>_structure.json`; keep the SVG committed next to it and a 2x PNG for viewers without SVG support.
