@@ -1,0 +1,28 @@
+{
+  "title": "PyTorch Model (.pt / .pth) - Zip Archive",
+  "container_label": "model/  (archive-name prefix on every entry)",
+  "columns": [
+    {
+      "label": "data.pkl  (pickle opcode stream, protocol 2)",
+      "width": 540,
+      "boxes": [
+        {"lines": ["collections.OrderedDict", "state_dict container  (+ _metadata versions)"]},
+        {"lines": ["torch._utils._rebuild_tensor_v2", "storage_offset, size, stride, requires_grad"]},
+        {"lines": ["persistent id  →  data/N", "('storage', FloatStorage, '0', 'cpu', numel)"]},
+        {"lines": ["GLOBAL + REDUCE / NEWOBJ / BUILD", "any importable callable  (blocked by weights_only)"], "danger": true}
+      ]
+    },
+    {
+      "width": 300,
+      "boxes": [
+        {"lines": ["Tensor Storages", "data/0 … data/N", "one file per storage", "raw bytes, uncompressed", "64-byte aligned"]}
+      ]
+    }
+  ],
+  "footer": [
+    {"lines": ["version", "\"3\""]},
+    {"lines": ["byteorder", "\"little\" | \"big\""]},
+    {"lines": [".format_version", ".storage_alignment"]},
+    {"lines": ["serialization_id", ".data/serialization_id"]}
+  ]
+}

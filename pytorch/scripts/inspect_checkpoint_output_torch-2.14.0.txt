@@ -1,0 +1,529 @@
+writing checkpoints to <tmpdir>
+
+==============================================================================
+torch 2.14.0+cpu: state_dict keys
+==============================================================================
+  conv.weight              (2, 1, 3, 3)   torch.float32
+  conv.bias                (2,)           torch.float32
+  bn.weight                (2,)           torch.float32
+  bn.bias                  (2,)           torch.float32
+  bn.running_mean          (2,)           torch.float32
+  bn.running_var           (2,)           torch.float32
+  bn.num_batches_tracked   ()             torch.int64
+  fc.weight                (3, 2)         torch.float32
+  fc.bias                  (3,)           torch.float32
+  _metadata = {'': {'version': 1}, 'conv': {'version': 1}, 'bn': {'version': 2}, 'fc': {'version': 1}}
+
+==============================================================================
+ZIP layout of tinynet_state_dict.pt (torch.save(model.state_dict()))
+==============================================================================
+first 4 bytes: b'PK\x03\x04'  (local file header magic checked by _is_zipfile)
+member                                    hdr_off data_off  %64     size  method  local extra field
+tinynet_state_dict/data.pkl                     0       64    0      854  STORED  'FB' + 3 pad bytes (7B total)
+tinynet_state_dict/.format_version            934     1024    0        1  STORED  'FB' + 22 pad bytes (26B total)
+tinynet_state_dict/.storage_alignment        1041     1152    0        2  STORED  'FB' + 40 pad bytes (44B total)
+tinynet_state_dict/byteorder                 1170     1280    0        6  STORED  'FB' + 48 pad bytes (52B total)
+tinynet_state_dict/data/0                    1302     1408    0       72  STORED  'FB' + 47 pad bytes (51B total)
+tinynet_state_dict/data/1                    1496     1600    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/2                    1624     1728    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/3                    1752     1856    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/4                    1880     1984    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/5                    2008     2112    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/6                    2136     2240    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/7                    2264     2368    0       24  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_state_dict/data/8                    2408     2496    0       12  STORED  'FB' + 29 pad bytes (33B total)
+tinynet_state_dict/version                   2524     2624    0        2  STORED  'FB' + 40 pad bytes (44B total)
+tinynet_state_dict/.data/serialization_id     2642     2752    0       40  STORED  'FB' + 35 pad bytes (39B total)
+
+  version                  = b'3\n'
+  byteorder                = b'little'
+  .format_version          = b'1'
+  .storage_alignment       = b'64'
+  .data/serialization_id   = b'0197786035336920144316088823782960924604'
+
+==============================================================================
+pickletools.dis of tinynet_state_dict/data.pkl (state_dict)
+==============================================================================
+    0: \x80 PROTO      2
+    2: c    GLOBAL     'collections OrderedDict'
+   27: q    BINPUT     0
+   29: )    EMPTY_TUPLE
+   30: R    REDUCE
+   31: q    BINPUT     1
+   33: (    MARK
+   34: X        BINUNICODE 'conv.weight'
+   50: q        BINPUT     2
+   52: c        GLOBAL     'torch._utils _rebuild_tensor_v2'
+   85: q        BINPUT     3
+   87: (        MARK
+   88: (            MARK
+   89: X                BINUNICODE 'storage'
+  101: q                BINPUT     4
+  103: c                GLOBAL     'torch FloatStorage'
+  123: q                BINPUT     5
+  125: X                BINUNICODE '0'
+  131: q                BINPUT     6
+  133: X                BINUNICODE 'cpu'
+  141: q                BINPUT     7
+  143: K                BININT1    18
+  145: t                TUPLE      (MARK at 88)
+  146: q            BINPUT     8
+  148: Q            BINPERSID
+  149: K            BININT1    0
+  151: (            MARK
+  152: K                BININT1    2
+  154: K                BININT1    1
+  156: K                BININT1    3
+  158: K                BININT1    3
+  160: t                TUPLE      (MARK at 151)
+  161: q            BINPUT     9
+  163: (            MARK
+  164: K                BININT1    9
+  166: K                BININT1    9
+  168: K                BININT1    3
+  170: K                BININT1    1
+  172: t                TUPLE      (MARK at 163)
+  173: q            BINPUT     10
+  175: \x89         NEWFALSE
+  176: h            BINGET     0
+  178: )            EMPTY_TUPLE
+  179: R            REDUCE
+  180: q            BINPUT     11
+  182: t            TUPLE      (MARK at 87)
+  183: q        BINPUT     12
+  185: R        REDUCE
+  186: q        BINPUT     13
+  188: X        BINUNICODE 'conv.bias'
+  202: q        BINPUT     14
+  204: h        BINGET     3
+  206: (        MARK
+  207: (            MARK
+  208: h                BINGET     4
+  210: h                BINGET     5
+  212: X                BINUNICODE '1'
+  218: q                BINPUT     15
+  220: h                BINGET     7
+  222: K                BININT1    2
+  224: t                TUPLE      (MARK at 207)
+  225: q            BINPUT     16
+  227: Q            BINPERSID
+  228: K            BININT1    0
+  230: K            BININT1    2
+  232: \x85         TUPLE1
+  233: q            BINPUT     17
+  235: K            BININT1    1
+  237: \x85         TUPLE1
+  238: q            BINPUT     18
+  240: \x89         NEWFALSE
+  241: h            BINGET     0
+  243: )            EMPTY_TUPLE
+  244: R            REDUCE
+  245: q            BINPUT     19
+  247: t            TUPLE      (MARK at 206)
+  248: q        BINPUT     20
+  250: R        REDUCE
+  251: q        BINPUT     21
+  253: X        BINUNICODE 'bn.weight'
+  267: q        BINPUT     22
+  269: h        BINGET     3
+  271: (        MARK
+  272: (            MARK
+  273: h                BINGET     4
+  275: h                BINGET     5
+  277: X                BINUNICODE '2'
+  283: q                BINPUT     23
+  285: h                BINGET     7
+  287: K                BININT1    2
+  289: t                TUPLE      (MARK at 272)
+  290: q            BINPUT     24
+  292: Q            BINPERSID
+  293: K            BININT1    0
+  295: K            BININT1    2
+  297: \x85         TUPLE1
+  298: q            BINPUT     25
+  300: K            BININT1    1
+  302: \x85         TUPLE1
+  303: q            BINPUT     26
+  305: \x89         NEWFALSE
+  306: h            BINGET     0
+  308: )            EMPTY_TUPLE
+  309: R            REDUCE
+  310: q            BINPUT     27
+  312: t            TUPLE      (MARK at 271)
+  313: q        BINPUT     28
+  315: R        REDUCE
+  316: q        BINPUT     29
+  318: X        BINUNICODE 'bn.bias'
+  330: q        BINPUT     30
+  332: h        BINGET     3
+  334: (        MARK
+  335: (            MARK
+  336: h                BINGET     4
+  338: h                BINGET     5
+  340: X                BINUNICODE '3'
+  346: q                BINPUT     31
+  348: h                BINGET     7
+  350: K                BININT1    2
+  352: t                TUPLE      (MARK at 335)
+  353: q            BINPUT     32
+  355: Q            BINPERSID
+  356: K            BININT1    0
+  358: K            BININT1    2
+  360: \x85         TUPLE1
+  361: q            BINPUT     33
+  363: K            BININT1    1
+  365: \x85         TUPLE1
+  366: q            BINPUT     34
+  368: \x89         NEWFALSE
+  369: h            BINGET     0
+  371: )            EMPTY_TUPLE
+  372: R            REDUCE
+  373: q            BINPUT     35
+  375: t            TUPLE      (MARK at 334)
+  376: q        BINPUT     36
+  378: R        REDUCE
+  379: q        BINPUT     37
+  381: X        BINUNICODE 'bn.running_mean'
+  401: q        BINPUT     38
+  403: h        BINGET     3
+  405: (        MARK
+  406: (            MARK
+  407: h                BINGET     4
+  409: h                BINGET     5
+  411: X                BINUNICODE '4'
+  417: q                BINPUT     39
+  419: h                BINGET     7
+  421: K                BININT1    2
+  423: t                TUPLE      (MARK at 406)
+  424: q            BINPUT     40
+  426: Q            BINPERSID
+  427: K            BININT1    0
+  429: K            BININT1    2
+  431: \x85         TUPLE1
+  432: q            BINPUT     41
+  434: K            BININT1    1
+  436: \x85         TUPLE1
+  437: q            BINPUT     42
+  439: \x89         NEWFALSE
+  440: h            BINGET     0
+  442: )            EMPTY_TUPLE
+  443: R            REDUCE
+  444: q            BINPUT     43
+  446: t            TUPLE      (MARK at 405)
+  447: q        BINPUT     44
+  449: R        REDUCE
+  450: q        BINPUT     45
+  452: X        BINUNICODE 'bn.running_var'
+  471: q        BINPUT     46
+  473: h        BINGET     3
+  475: (        MARK
+  476: (            MARK
+  477: h                BINGET     4
+  479: h                BINGET     5
+  481: X                BINUNICODE '5'
+  487: q                BINPUT     47
+  489: h                BINGET     7
+  491: K                BININT1    2
+  493: t                TUPLE      (MARK at 476)
+  494: q            BINPUT     48
+  496: Q            BINPERSID
+  497: K            BININT1    0
+  499: K            BININT1    2
+  501: \x85         TUPLE1
+  502: q            BINPUT     49
+  504: K            BININT1    1
+  506: \x85         TUPLE1
+  507: q            BINPUT     50
+  509: \x89         NEWFALSE
+  510: h            BINGET     0
+  512: )            EMPTY_TUPLE
+  513: R            REDUCE
+  514: q            BINPUT     51
+  516: t            TUPLE      (MARK at 475)
+  517: q        BINPUT     52
+  519: R        REDUCE
+  520: q        BINPUT     53
+  522: X        BINUNICODE 'bn.num_batches_tracked'
+  549: q        BINPUT     54
+  551: h        BINGET     3
+  553: (        MARK
+  554: (            MARK
+  555: h                BINGET     4
+  557: c                GLOBAL     'torch LongStorage'
+  576: q                BINPUT     55
+  578: X                BINUNICODE '6'
+  584: q                BINPUT     56
+  586: h                BINGET     7
+  588: K                BININT1    1
+  590: t                TUPLE      (MARK at 554)
+  591: q            BINPUT     57
+  593: Q            BINPERSID
+  594: K            BININT1    0
+  596: )            EMPTY_TUPLE
+  597: )            EMPTY_TUPLE
+  598: \x89         NEWFALSE
+  599: h            BINGET     0
+  601: )            EMPTY_TUPLE
+  602: R            REDUCE
+  603: q            BINPUT     58
+  605: t            TUPLE      (MARK at 553)
+  606: q        BINPUT     59
+  608: R        REDUCE
+  609: q        BINPUT     60
+  611: X        BINUNICODE 'fc.weight'
+  625: q        BINPUT     61
+  627: h        BINGET     3
+  629: (        MARK
+  630: (            MARK
+  631: h                BINGET     4
+  633: h                BINGET     5
+  635: X                BINUNICODE '7'
+  641: q                BINPUT     62
+  643: h                BINGET     7
+  645: K                BININT1    6
+  647: t                TUPLE      (MARK at 630)
+  648: q            BINPUT     63
+  650: Q            BINPERSID
+  651: K            BININT1    0
+  653: K            BININT1    3
+  655: K            BININT1    2
+  657: \x86         TUPLE2
+  658: q            BINPUT     64
+  660: K            BININT1    2
+  662: K            BININT1    1
+  664: \x86         TUPLE2
+  665: q            BINPUT     65
+  667: \x89         NEWFALSE
+  668: h            BINGET     0
+  670: )            EMPTY_TUPLE
+  671: R            REDUCE
+  672: q            BINPUT     66
+  674: t            TUPLE      (MARK at 629)
+  675: q        BINPUT     67
+  677: R        REDUCE
+  678: q        BINPUT     68
+  680: X        BINUNICODE 'fc.bias'
+  692: q        BINPUT     69
+  694: h        BINGET     3
+  696: (        MARK
+  697: (            MARK
+  698: h                BINGET     4
+  700: h                BINGET     5
+  702: X                BINUNICODE '8'
+  708: q                BINPUT     70
+  710: h                BINGET     7
+  712: K                BININT1    3
+  714: t                TUPLE      (MARK at 697)
+  715: q            BINPUT     71
+  717: Q            BINPERSID
+  718: K            BININT1    0
+  720: K            BININT1    3
+  722: \x85         TUPLE1
+  723: q            BINPUT     72
+  725: K            BININT1    1
+  727: \x85         TUPLE1
+  728: q            BINPUT     73
+  730: \x89         NEWFALSE
+  731: h            BINGET     0
+  733: )            EMPTY_TUPLE
+  734: R            REDUCE
+  735: q            BINPUT     74
+  737: t            TUPLE      (MARK at 696)
+  738: q        BINPUT     75
+  740: R        REDUCE
+  741: q        BINPUT     76
+  743: u        SETITEMS   (MARK at 33)
+  744: }    EMPTY_DICT
+  745: q    BINPUT     77
+  747: X    BINUNICODE '_metadata'
+  761: q    BINPUT     78
+  763: h    BINGET     0
+  765: )    EMPTY_TUPLE
+  766: R    REDUCE
+  767: q    BINPUT     79
+  769: (    MARK
+  770: X        BINUNICODE ''
+  775: q        BINPUT     80
+  777: }        EMPTY_DICT
+  778: q        BINPUT     81
+  780: X        BINUNICODE 'version'
+  792: q        BINPUT     82
+  794: K        BININT1    1
+  796: s        SETITEM
+  797: X        BINUNICODE 'conv'
+  806: q        BINPUT     83
+  808: }        EMPTY_DICT
+  809: q        BINPUT     84
+  811: h        BINGET     82
+  813: K        BININT1    1
+  815: s        SETITEM
+  816: X        BINUNICODE 'bn'
+  823: q        BINPUT     85
+  825: }        EMPTY_DICT
+  826: q        BINPUT     86
+  828: h        BINGET     82
+  830: K        BININT1    2
+  832: s        SETITEM
+  833: X        BINUNICODE 'fc'
+  840: q        BINPUT     87
+  842: }        EMPTY_DICT
+  843: q        BINPUT     88
+  845: h        BINGET     82
+  847: K        BININT1    1
+  849: s        SETITEM
+  850: u        SETITEMS   (MARK at 769)
+  851: s    SETITEM
+  852: b    BUILD
+  853: .    STOP
+highest protocol among opcodes = 2
+
+==============================================================================
+ZIP layout of tinynet_full_model.pt (torch.save(model))
+==============================================================================
+member                                    hdr_off data_off  %64     size  method  local extra field
+tinynet_full_model/data.pkl                     0       64    0     2329  STORED  'FB' + 3 pad bytes (7B total)
+tinynet_full_model/.format_version           2409     2496    0        1  STORED  'FB' + 19 pad bytes (23B total)
+tinynet_full_model/.storage_alignment        2513     2624    0        2  STORED  'FB' + 40 pad bytes (44B total)
+tinynet_full_model/byteorder                 2642     2752    0        6  STORED  'FB' + 48 pad bytes (52B total)
+tinynet_full_model/data/0                    2774     2880    0       72  STORED  'FB' + 47 pad bytes (51B total)
+tinynet_full_model/data/1                    2968     3072    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/2                    3096     3200    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/3                    3224     3328    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/4                    3352     3456    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/5                    3480     3584    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/6                    3608     3712    0        8  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/7                    3736     3840    0       24  STORED  'FB' + 45 pad bytes (49B total)
+tinynet_full_model/data/8                    3880     3968    0       12  STORED  'FB' + 29 pad bytes (33B total)
+tinynet_full_model/version                   3996     4096    0        2  STORED  'FB' + 40 pad bytes (44B total)
+tinynet_full_model/.data/serialization_id     4114     4224    0       40  STORED  'FB' + 35 pad bytes (39B total)
+
+  version                  = b'3\n'
+  byteorder                = b'little'
+  .format_version          = b'1'
+  .storage_alignment       = b'64'
+  .data/serialization_id   = b'0197786035336920144301535835429152148042'
+
+==============================================================================
+pickletools.dis of tinynet_full_model/data.pkl (whole nn.Module) - first 60 lines
+==============================================================================
+    0: \x80 PROTO      2
+    2: c    GLOBAL     '__main__ TinyNet'
+   20: q    BINPUT     0
+   22: )    EMPTY_TUPLE
+   23: \x81 NEWOBJ
+   24: q    BINPUT     1
+   26: }    EMPTY_DICT
+   27: q    BINPUT     2
+   29: (    MARK
+   30: X        BINUNICODE 'training'
+   43: q        BINPUT     3
+   45: \x88     NEWTRUE
+   46: X        BINUNICODE '_parameters'
+   62: q        BINPUT     4
+   64: }        EMPTY_DICT
+   65: q        BINPUT     5
+   67: X        BINUNICODE '_buffers'
+   80: q        BINPUT     6
+   82: }        EMPTY_DICT
+   83: q        BINPUT     7
+   85: X        BINUNICODE '_non_persistent_buffers_set'
+  117: q        BINPUT     8
+  119: c        GLOBAL     '__builtin__ set'
+  136: q        BINPUT     9
+  138: ]        EMPTY_LIST
+  139: q        BINPUT     10
+  141: \x85     TUPLE1
+  142: q        BINPUT     11
+  144: R        REDUCE
+  145: q        BINPUT     12
+  147: X        BINUNICODE '_backward_pre_hooks'
+  171: q        BINPUT     13
+  173: c        GLOBAL     'collections OrderedDict'
+  198: q        BINPUT     14
+  200: )        EMPTY_TUPLE
+  201: R        REDUCE
+  202: q        BINPUT     15
+  204: X        BINUNICODE '_backward_hooks'
+  224: q        BINPUT     16
+  226: h        BINGET     14
+  228: )        EMPTY_TUPLE
+  229: R        REDUCE
+  230: q        BINPUT     17
+  232: X        BINUNICODE '_is_full_backward_hook'
+  259: q        BINPUT     18
+  261: N        NONE
+  262: X        BINUNICODE '_forward_hooks'
+  281: q        BINPUT     19
+  283: h        BINGET     14
+  285: )        EMPTY_TUPLE
+  286: R        REDUCE
+  287: q        BINPUT     20
+  289: X        BINUNICODE '_forward_hooks_with_kwargs'
+  320: q        BINPUT     21
+  322: h        BINGET     14
+  324: )        EMPTY_TUPLE
+  325: R        REDUCE
+  326: q        BINPUT     22
+  328: X        BINUNICODE '_forward_hooks_always_called'
+  361: q        BINPUT     23
+    ... (736 more lines)
+
+==============================================================================
+GLOBAL opcodes referenced by each pickle
+==============================================================================
+  tinynet_state_dict.pt:
+      collections OrderedDict
+      torch FloatStorage
+      torch LongStorage
+      torch._utils _rebuild_tensor_v2
+  tinynet_full_model.pt:
+      __builtin__ set
+      __main__ TinyNet
+      collections OrderedDict
+      torch FloatStorage
+      torch LongStorage
+      torch._utils _rebuild_parameter
+      torch._utils _rebuild_tensor_v2
+      torch.nn.modules.batchnorm BatchNorm2d
+      torch.nn.modules.conv Conv2d
+      torch.nn.modules.linear Linear
+
+==============================================================================
+weights_only=True (default) behaviour
+==============================================================================
+  state_dict loads fine: OrderedDict with 9 tensors
+  whole-module checkpoint is rejected:
+      Weights only load failed. This file can still be loaded, to do so you have two options, [1mdo those steps only if you t
+      	(1) In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`.
+      	(2) Alternatively, to load with `weights_only=True` please check the recommended steps in the following error message.
+      	WeightsUnpickler error: Unsupported global: GLOBAL __main__.TinyNet was not an allowed global by default. Please use `t
+  get_unsafe_globals_in_checkpoint(full) = ['torch.nn.modules.batchnorm.BatchNorm2d', 'torch.nn.modules.linear.Linear', 'torch.nn.modules.conv.Conv2d', '__main__.TinyNet']
+  ...loads with safe_globals([TinyNet, Conv2d, BatchNorm2d, Linear]) => TinyNet
+
+==============================================================================
+Why weights_only exists: a pickle can call any importable callable
+==============================================================================
+  weights_only=True : Check the documentation of torch.load to learn more about types accepted by default with weights_only https://
+*** arbitrary code ran during torch.load(weights_only=False) ***
+
+==============================================================================
+Buffer save uses archive name 'archive/'
+==============================================================================
+  members: ['archive/data.pkl', 'archive/.format_version', 'archive/.storage_alignment'] ...
+
+==============================================================================
+Legacy (pre-1.6) format: tinynet_legacy.pt
+==============================================================================
+  first 4 bytes: b'\x80\x02\x8a\n' (not a ZIP -> _legacy_load)
+  pickle #1 magic  = 0x1950a86a20f9469cfc6c (== torch.serialization.MAGIC_NUMBER: True)
+  pickle #2 proto  = 1001
+  pickle #3 sysinfo= {'protocol_version': 1001, 'little_endian': True, 'type_sizes': {'short': 2, 'int': 4, 'long': 4}}
+  pickle #4 main object: bytes [137, 1076)
+  pickle #5 storage keys (str(cdata) ids) = ['1069895440', '1069895584', '1069896256'] ...
+  then raw storages: int64 numel=2 followed by 2 elements, repeated per key
+
+==============================================================================
+mmap=True maps the whole file once and slices it per storage
+==============================================================================
+  conv.weight.untyped_storage().data_ptr() % 64 = 0 (each data/N record starts on a 64-byte boundary, so the mapped pointer is aligned too)
+  values identical to eager load: True
